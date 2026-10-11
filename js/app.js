@@ -39,7 +39,8 @@ async function obtenerEstudiantes() {
 // TODO 1: Consultá la colección "asignaturas" y devolvé un array de objetos.
 // Pista: reutilizá collection(), getDocs(), document.id y document.data().
 async function obtenerAsignaturas() {
-
+  const respuesta = await getDocs(collection(db, "asignaturas"));
+  return respuesta.docs.map((documento) => ({ id: documento.id, ...documento.data() }));
 }
 
 // Esta función ya está implementada. Recibe los datos y genera las filas de la tabla.
@@ -65,7 +66,21 @@ function mostrarEstudiantes(estudiantes, carreras) {
 // 2. Usá slice(0, 3) para conservar solo tres estudiantes.
 // 3. Generá dentro de #ranking el HTML de cada posición.
 function mostrarRanking(estudiantes, carreras) {
+  const carrerasPorId = Object.fromEntries(carreras.map((carrera) => [carrera.id, carrera.nombre]));
+  const topTres = [...estudiantes]
+    .sort((a, b) => b.promedio - a.promedio)
+    .slice(0, 3);
 
+  ranking.innerHTML = topTres.map((estudiante, indice) => `
+    <div class="ranking-item d-flex align-items-center gap-3">
+      <span class="ranking-position ${indice === 0 ? "first" : ""}">${indice + 1}</span>
+      <div class="flex-grow-1">
+        <strong class="d-block small">${estudiante.nombre} ${estudiante.apellido}</strong>
+        <span class="small text-secondary">${carrerasPorId[estudiante.carreraId] || "Sin carrera"}</span>
+      </div>
+      <span class="average">${formatearPromedio(estudiante.promedio)}</span>
+    </div>
+  `).join("") || '<div class="loading-box">No hay estudiantes para mostrar en el ranking.</div>';
 }
 
 // TODO 3: Mostrá únicamente los estudiantes cuyo campo destacado sea true.
@@ -73,7 +88,18 @@ function mostrarRanking(estudiantes, carreras) {
 // 2. Generá una tarjeta breve con nombre, carrera y promedio para cada resultado.
 // 3. Insertá el resultado en #destacados.
 function mostrarDestacados(estudiantes, carreras) {
+  const carrerasPorId = Object.fromEntries(carreras.map((carrera) => [carrera.id, carrera.nombre]));
+  const destacados = estudiantes.filter((estudiante) => estudiante.destacado === true);
 
+  destacadosContenedor.innerHTML = destacados.map((estudiante) => `
+    <div class="subject-item d-flex align-items-center justify-content-between gap-3">
+      <div>
+        <strong class="d-block small">${estudiante.nombre} ${estudiante.apellido}</strong>
+        <span class="small text-secondary">${carrerasPorId[estudiante.carreraId] || "Sin carrera"}</span>
+      </div>
+      <span class="average">${formatearPromedio(estudiante.promedio)}</span>
+    </div>
+  `).join("") || '<div class="loading-box">No hay estudiantes destacados.</div>';
 }
 
 // Esta función ya está implementada. Solo necesita recibir el array de asignaturas.
